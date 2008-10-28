@@ -1,4 +1,3 @@
-.shipit
 Changes
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
@@ -9,16 +8,8 @@ inc/Module/Install/Fetch.pm
 inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
-inc/Module/Install/Scripts.pm
-inc/Module/Install/TestBase.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
-inc/Spiffy.pm
-inc/Test/Base.pm
-inc/Test/Base/Filter.pm
-inc/Test/Builder.pm
-inc/Test/Builder/Module.pm
-inc/Test/More.pm
 lib/Lingua/JA/TFIDF.pm
 lib/Lingua/JA/TFIDF/Base.pm
 lib/Lingua/JA/TFIDF/df.st

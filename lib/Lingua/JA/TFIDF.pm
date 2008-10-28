@@ -4,13 +4,14 @@ use strict;
 use warnings;
 use List::MoreUtils qw(any);
 use Storable qw(retrieve nstore);
+use Text::MeCab;
 use base qw(Lingua::JA::TFIDF::Base);
 use Lingua::JA::TFIDF::Result;
 use Lingua::JA::TFIDF::Fetcher;
 
-__PACKAGE__->mk_accessors($_) for qw( _df_data ng_word _fetcher);
+__PACKAGE__->mk_accessors($_) for qw( _mecab _df_data ng_word _fetcher);
 
-our $VERSION = '0.00001';
+our $VERSION = '0.00002';
 
 my $N = 25000000000;
 
@@ -38,20 +39,12 @@ sub tf {
 sub _calc_tf {
     my $self     = shift;
     my $text_ref = shift;
-    $$text_ref =~ s/\r\n//g;
-    $$text_ref =~ s/\n//g;
-    $$text_ref =~ s/'//g;
-    $$text_ref =~ s/"//g;
-    $$text_ref =~ s/|//g;
-    my $cmd =
-        'echo \''
-      . $$text_ref
-      . '\' | mecab -b 100000 --node-format="%m\t%H\n" --unk-format="%m\t%H\tUNK\n"';
     my $data;
-
-    for (`$cmd`) {
-        chomp $_;
-        my ( $word, $info, $unknown ) = split( /\t/, $_, 3 );
+    my $mecab = $self->mecab;
+    for ( my $node = $mecab->parse($$text_ref) ; $node ; $node = $node->next ) {
+        my $rec = $node->format($mecab);
+        chomp $rec;
+        my ( $word, $info, $unknown ) = split( /\t/, $rec, 3 );
         next if !$info;
         if ( $info =~ /名詞/ ) {
             next if $info =~ /数|非自立|語幹|代名詞|接尾/;
@@ -61,6 +54,16 @@ sub _calc_tf {
         }
     }
     return $data;
+}
+
+sub mecab {
+    my $self = shift;
+    $self->_mecab or sub {
+        my $mecab = Text::MeCab->new(
+            { node_format => '%m\t%H\n', unk_format => '%m\t%H\tUNK\n' } );
+        $self->_mecab($mecab);
+      }
+      ->();
 }
 
 sub _calc_idf {
@@ -160,30 +163,30 @@ __END__
 
 =head1 NAME
 
-Lingua::JA::TFIDF - TFIDF Calculator based on MeCab.
+Lingua::JA::TFIDF - TF/IDF calculator based on MeCab.
 
 =head1 SYNOPSIS
 
   use Lingua::JA::TFIDF;
   use Data::Dumper;
 
-  my $calc   = Lingua::JA::TFIDF->new(%config);
+  my $calc = Lingua::JA::TFIDF->new(%config);
 
-  # calculate TFIDF and return a result object.
-  my $result = $$calc->tfidf;
+  # calculate TF/IDF and return a result object.
+  my $result = $calc->tfidf($text);
   print Dumper $result->list;
-
-  # or calculate just TF 
-  print Dumper $calc->tf->list;
 
   # dump the result object.
   print Dumper $result->dump
+
+  # or calculate just TF 
+  print Dumper $calc->tf($text)->list;
 
 =head1 DESCRIPTION
 
 * This software is still in alpha release * 
 
-Lingua::JA::TFIDF is TFIDF Calculator based on MeCab.
+Lingua::JA::TFIDF is TF/IDF calculator based on MeCab.
 It has DF(Document Frequency) data set that was fetched from Yahoo Search API, beforehand.
 
 =head1 METHODS
@@ -204,7 +207,7 @@ Instantiates a new Lingua::JA::TFIDF object. Takes the following parameters (opt
 
 =head2 tfidf($text); 
 
-Calculates TFIDF score.
+Calculates TF/IDF score.
 If the text includes unknown words, Document Frequency score of unknown words are replaced the average score of known words.
 If you set TRUE value to fetch_df parameter on constructor, the calculator fetches the unknown word from Yahoo Search API. 
 
@@ -216,15 +219,19 @@ Calculates TF score.
 =head2 ng_word 
 
 Accessor method.
-You can replace ngword.
+You can replace NG word.
+
+=head2 mecab 
+
+Inner accessor method.
 
 =head2 df_data 
 
-Inncer accessor method.
+Inner accessor method.
 
 =head2 fetcher 
 
-Inncer accessor method.
+Inner accessor method.
 
 =head1 AUTHOR
 

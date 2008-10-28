@@ -17,8 +17,6 @@ sub new {
 sub fetch {
     my $self = shift;
     my $word = shift;
-    use Data::Dumper;
-    print Dumper $self->config;
     $word =~ s/([^\w ])/'%'.unpack('H2', $1)/eg;
     $word =~ tr/ /+/;
     my $url = $self->{url} . $word;

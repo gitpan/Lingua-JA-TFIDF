@@ -1,4 +1,8 @@
 Revision history for Perl extension Lingua::JA::TFIDF
 
+0.00002  2008/10/29
+        - use Text::MeCab
+        - Fix documentation
+
 0.00001  2008/10/28 
         - original version

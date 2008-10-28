@@ -5,6 +5,7 @@ use inc::Module::Install;
 name 'Lingua-JA-TFIDF';
 all_from 'lib/Lingua/JA/TFIDF.pm';
 
+requires('Text::MeCab');
 requires('List::MoreUtils');
 requires('Storable');
 requires('Class::Accessor::Fast');
@@ -14,6 +15,10 @@ requires('XML::TreePP');
 requires('Carp');
 requires('HTML::Feature');
 build_requires 'Test::More';
+recommends('YAML::Sync');
+recommends('Getopt::Long');
+recommends('Term::ReadLine');
+recommends('HTML::Feature');
 use_test_base;
 auto_install;
 
