@@ -1,8 +1,13 @@
 use strict;
 use Lingua::JA::TFIDF;
-use Test::More tests => 1;
+use Test::More tests => 2;
+require 't/TestServer.pm';
 
-my $calculator = Lingua::JA::TFIDF->new;
+my $s        = TestServer->new;
+my $url_root = $s->started_ok("starting a test server");
+
+my %config = ( fetch_df => 1 );
+my $calculator = Lingua::JA::TFIDF->new(%config);
 
 &overwrite;
 
@@ -20,24 +25,44 @@ my $text = q(
 );
 
 my $result = $calculator->tfidf($text);
-is_deeply( $result->list(10), &correct, "tfidf() results deeply match" );
+is_deeply( $result->list(10), &correct,
+    "tfidf() with fetch_df results deeply match" );
 
 sub correct {
     return [
-        { '連邦'       => '51.5824158847192' },
-        { '諸君'       => '44.6736574508163' },
-        { '地球'       => '25.6811539727557' },
-        { '怒り'       => '18.1728130488376' },
-        { '戦い'       => '16.9994600697375' },
-        { 'ジオン'    => '16.8849466710836' },
-        { 'エリート' => '14.5288604458417' },
-        { '悲しみ'    => '13.444211864191' },
-        { '勝利'       => '10.7808653109117' },
-        { '戦争'       => '10.6616811165072' }
+        { '連邦'             => '51.5824158847192' },
+        { '諸君'             => '44.6736574508163' },
+        { 'ジオン'          => '33.2472254467651' },
+        { '地球'             => '25.6811539727557' },
+        { 'ガルマ'          => '20.9896008544296' },
+        { '怒り'             => '18.1728130488376' },
+        { '戦い'             => '16.9994600697375' },
+        { 'エリート'       => '14.5288604458417' },
+        { '悲しみ'          => '13.444211864191' },
+        { 'ガルマ・ザビ' => '11.654489029292' }
     ];
 }
 
 sub overwrite {
+
+    *Lingua::JA::TFIDF::Fetcher::_prepare = sub {
+        my $self                 = shift;
+        my %LWP_UserAgent_config = ();
+        if ( ref $self->config->{LWP_UserAgent} eq 'HASH' ) {
+            %LWP_UserAgent_config = %{ $self->config->{LWP_UserAgent} };
+        }
+        $self->{user_agent} = LWP::UserAgent->new(%LWP_UserAgent_config);
+        my %XML_TreePP_config = ();
+        if ( ref $self->config->{XML_TreePP} eq 'HASH' ) {
+            %XML_TreePP_config = %{ $self->config->{XML_TreePP} };
+        }
+        $self->{xml_treepp} = XML::TreePP->new(%XML_TreePP_config);
+        my $yahoo_api_appid = $self->config->{yahoo_api_appid} || 'yahooDemo';
+        $self->{url} =
+            'http://localhost:8080?appid='
+          . $yahoo_api_appid
+          . '&results=1&adult_ok=1&query=';
+    };
 
     *Lingua::JA::TFIDF::_calc_tf = sub {
 
@@ -114,5 +139,5 @@ sub overwrite {
             '真'       => { 'tf' => 1 },
             '否'       => { 'tf' => 1 }
         };
-      }
+    };
 }

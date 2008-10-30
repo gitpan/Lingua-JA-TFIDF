@@ -11,7 +11,7 @@ use Lingua::JA::TFIDF::Fetcher;
 
 __PACKAGE__->mk_accessors($_) for qw( _mecab _df_data ng_word _fetcher);
 
-our $VERSION = '0.00002';
+our $VERSION = '0.00003';
 
 my $N = 25000000000;
 
@@ -51,6 +51,7 @@ sub _calc_tf {
             next if any { $word eq $_ } @{ $self->_ng_word };
             $data->{$word}->{tf}++;
             $data->{$word}->{unknown} = 1 if $unknown;
+            $data->{$word}->{info}    = $info;
         }
     }
     return $data;
@@ -92,9 +93,12 @@ sub _calc_idf {
             $df = $self->fetcher->fetch($word);
             if ($df) {
                 $df_data->{$word} = $df;
+                nstore( $df_data, $self->config->{df_file} )
+                  if $self->config->{fetch_df_save};
             }
-            nstore( $df_data, $self->config->{df_file} )
-              if $self->config->{fetch_df_save};
+            else {
+                $df = $N;
+            }
         }
         else {
             if ( !$df_sum ) {
@@ -130,6 +134,9 @@ sub _ng_word {
             qw(a b c d e f g h i j k l m n o p q r s t u v w x y z),
             qw(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z),
         );
+        if ( ref $self->config->{ng_word} eq 'ARRAY' ) {
+            @ng = @{ $self->config->{ng_word} };
+        }
         $self->ng_word( \@ng );
       }
       ->();

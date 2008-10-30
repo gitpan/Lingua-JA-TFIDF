@@ -15,6 +15,8 @@ requires('XML::TreePP');
 requires('Carp');
 requires('HTML::Feature');
 build_requires 'Test::More';
+build_requires 'Test::HTTP::Server::Simple';
+build_requires 'HTTP::Server::Simple::CGI';
 recommends('YAML::Sync');
 recommends('Getopt::Long');
 recommends('Term::ReadLine');

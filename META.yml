@@ -3,6 +3,8 @@ abstract: 'TF/IDF calculator based on MeCab.'
 author:
   - 'Takeshi Miki <miki@cpan.org>'
 build_requires:
+  HTTP::Server::Simple::CGI: 0
+  Test::HTTP::Server::Simple: 0
   Test::More: 0
 distribution_type: module
 generated_by: 'Module::Install version 0.77'
@@ -32,4 +34,4 @@ requires:
   XML::TreePP: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.00002
+version: 0.00003
