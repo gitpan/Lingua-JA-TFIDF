@@ -11,7 +11,7 @@ use Lingua::JA::TFIDF::Fetcher;
 
 __PACKAGE__->mk_accessors($_) for qw( _mecab _df_data ng_word _fetcher);
 
-our $VERSION = '0.00003';
+our $VERSION = '0.00004';
 
 my $N = 25000000000;
 
@@ -39,19 +39,22 @@ sub tf {
 sub _calc_tf {
     my $self     = shift;
     my $text_ref = shift;
-    my $data;
-    my $mecab = $self->mecab;
+    my $data     = {};
+    my $mecab    = $self->mecab;
     for ( my $node = $mecab->parse($$text_ref) ; $node ; $node = $node->next ) {
         my $rec = $node->format($mecab);
         chomp $rec;
         my ( $word, $info, $unknown ) = split( /\t/, $rec, 3 );
         next if !$info;
-        if ( $info =~ /名詞/ ) {
-            next if $info =~ /数|非自立|語幹|代名詞|接尾/;
+        if ( $info =~ /^名詞/ ) {
+            next
+              if $info =~ /数|非自立|語幹|代名詞|接尾|副詞可能/;
             next if any { $word eq $_ } @{ $self->_ng_word };
+            next if $info =~ /サ変接続/ && $rec =~ /\*\sUNK/;
+            next if $info =~ /一般/       && $rec =~ /\*\sUNK/;
             $data->{$word}->{tf}++;
             $data->{$word}->{unknown} = 1 if $unknown;
-            $data->{$word}->{info}    = $info;
+            $data->{$word}->{info} = $info;
         }
     }
     return $data;
